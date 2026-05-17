@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สภาพอากาศ ขอนแก่น</title>
+    <!-- นำเข้า Google Font: Chakra Petch -->
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Chakra Petch', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ล็อกสัดส่วนหน้าจอให้เป็น 4:3 เสมอ */
+        .dashboard-container {
+            aspect-ratio: 4 / 3;
+            width: 100vw;
+            max-width: calc(100vh * (4 / 3));
+            max-height: 100vh;
+            display: grid;
+            grid-template-rows: 15% 55% 30%;
+            padding: 2%;
+            gap: 2%;
+        }
+
+        /* ส่วนหัว: เวลา และ ชื่อเมือง */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #333;
+        }
+        .time {
+            font-size: 6cqw;
+            font-weight: 700;
+            color: #00FFFF; /* สีฟ้าสว่าง */
+        }
+        .city {
+            font-size: 5cqw;
+            font-weight: 600;
+            color: #FF00FF; /* สีชมพูบานเย็น */
+        }
+
+        /* ส่วนกลาง: ข้อมูลปัจจุบัน (อุณหภูมิ, PM2.5, โอกาสฝน) */
+        .current-weather {
+            display: grid;
+            grid-template-columns: 40% 30% 30%;
+            gap: 2%;
+            align-items: center;
+            text-align: center;
+        }
+        .temp-box, .pm25-box, .rain-box {
+            background-color: #111;
+            border-radius: 15px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        .main-temp {
+            font-size: 14cqw;
+            font-weight: 700;
+            color: #39FF14; /* สีเขียวสะท้อนแสง */
+            line-height: 1;
+        }
+        .weather-desc {
+            font-size: 4cqw;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        .data-value {
+            font-size: 9cqw;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .data-label {
+            font-size: 3.5cqw;
+            color: #bbb;
+        }
+
+        .pm25-val { color: #FFEA00; } /* สีเหลืองสว่าง */
+        .rain-val { color: #00BFFF; } /* สีฟ้าลึก */
+
+        /* ส่วนล่าง: พยากรณ์อากาศ 7 วัน */
+        .forecast-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1.5%;
+        }
+        .forecast-card {
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 10px 5px;
+            border: 1px solid #333;
+        }
+        .f-day {
+            font-size: 3cqw;
+            color: #FF9900;
+            font-weight: 700;
+        }
+        .f-icon {
+            font-size: 4.5cqw;
+            margin: 5px 0;
+        }
+        .f-temp {
+            font-size: 2.8cqw;
+            color: #fff;
+        }
+
+        /* Container Query สำหรับขนาดตัวอักษรที่เป๊ะกับกล่อง */
+        .dashboard-container {
+            container-type: inline-size;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="time" id="clock">00:00:00</div>
+            <div class="city">ขอนแก่น (Khon Kaen)</div>
+        </div>
+
+        <!-- Current Weather -->
+        <div class="current-weather">
+            <div class="temp-box">
+                <div class="main-temp" id="current-temp">--°</div>
+                <div class="weather-desc" id="current-desc">กำลังโหลดข้อมูล...</div>
+            </div>
+            <div class="pm25-box">
+                <div class="data-value pm25-val" id="current-pm25">--</div>
+                <div class="data-label">PM 2.5 (µg/m³)</div>
+            </div>
+            <div class="rain-box">
+                <div class="data-value rain-val" id="current-rain">--</div>
+                <div class="data-label">คาดการณ์ฝน (มม.)</div>
+            </div>
+        </div>
+
+        <!-- 7 Days Forecast -->
+        <div class="forecast-container" id="forecast-grid">
+            <!-- ข้อมูลพยากรณ์ 7 วันจะถูกแทรกที่นี่ด้วย JS -->
+        </div>
+    </div>
+
+    <script>
+        // พิกัดเมืองขอนแก่น
+        const LAT = 16.4322;
+        const LON = 102.8236;
+
+        // ฟังก์ชันอัปเดตนาฬิกา
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // แปลง WMO Weather Code เป็นไอคอนและข้อความ
+        function getWeatherDetails(code) {
+            const codes = {
+                0: { icon: "☀️", text: "ฟ้าโปร่ง" },
+                1: { icon: "🌤️", text: "เมฆบางส่วน" },
+                2: { icon: "⛅", text: "มีเมฆมาก" },
+                3: { icon: "☁️", text: "มืดครึ้ม" },
+                45: { icon: "🌫️", text: "มีหมอก" },
+                48: { icon: "🌫️", text: "หมอกลงจัด" },
+                51: { icon: "🌦️", text: "ฝนปรอยๆ" },
+                61: { icon: "🌧️", text: "ฝนตกเล็กน้อย" },
+                63: { icon: "🌧️", text: "ฝนตกปานกลาง" },
+                65: { icon: "🌧️", text: "ฝนตกหนัก" },
+                80: { icon: "⛈️", text: "ฝนฟ้าคะนอง" },
+                95: { icon: "🌩️", text: "พายุฝนฟ้าคะนอง" }
+            };
+            return codes[code] || { icon: "❓", text: "ไม่ทราบสถานะ" };
+        }
+
+        // แปลงวันที่เป็นวันในสัปดาห์ภาษาไทย
+        function getThaiDay(dateString) {
+            const days = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+            const date = new Date(dateString);
+            return days[date.getDay()];
+        }
+
+        // ฟังก์ชันดึงข้อมูลสภาพอากาศ
+        async function fetchWeatherData() {
+            try {
+                // 1. ดึงข้อมูลสภาพอากาศและพยากรณ์
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,rain,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FBangkok`);
+                const weatherData = await weatherRes.json();
+
+                // 2. ดึงข้อมูลคุณภาพอากาศ (PM2.5)
+                const aqiRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok`);
+                const aqiData = await aqiRes.json();
+
+                // --- อัปเดตข้อมูลปัจจุบัน ---
+                const current = weatherData.current;
+                const weatherDetail = getWeatherDetails(current.weather_code);
+                
+                document.getElementById('current-temp').innerText = `${Math.round(current.temperature_2m)}°`;
+                document.getElementById('current-desc').innerText = `${weatherDetail.icon} ${weatherDetail.text}`;
+                document.getElementById('current-rain').innerText = current.rain;
+                
+                // อัปเดต PM 2.5 และเปลี่ยนสีตามความอันตราย
+                const pm25Value = Math.round(aqiData.current.pm2_5);
+                const pm25Element = document.getElementById('current-pm25');
+                pm25Element.innerText = pm25Value;
+                
+                if (pm25Value <= 25) pm25Element.style.color = "#39FF14"; // เขียว
+                else if (pm25Value <= 50) pm25Element.style.color = "#FFEA00"; // เหลือง
+                else if (pm25Value <= 100) pm25Element.style.color = "#FF9900"; // ส้ม
+                else pm25Element.style.color = "#FF003C"; // แดง
+
+                // --- อัปเดตพยากรณ์ 7 วัน ---
+                const daily = weatherData.daily;
+                const forecastGrid = document.getElementById('forecast-grid');
+                forecastGrid.innerHTML = ''; // ล้างค่าเดิม
+
+                for (let i = 0; i < 7; i++) {
+                    const dayName = i === 0 ? "วันนี้" : getThaiDay(daily.time[i]);
+                    const fIcon = getWeatherDetails(daily.weather_code[i]).icon;
+                    const maxT = Math.round(daily.temperature_2m_max[i]);
+                    const minT = Math.round(daily.temperature_2m_min[i]);
+
+                    const card = document.createElement('div');
+                    card.className = 'forecast-card';
+                    card.innerHTML = `
+                        <div class="f-day">${dayName}</div>
+                        <div class="f-icon">${fIcon}</div>
+                        <div class="f-temp"><span style="color:#FF69B4;">${maxT}°</span><br><span style="color:#00BFFF;">${minT}°</span></div>
+                    `;
+                    forecastGrid.appendChild(card);
+                }
+
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+                document.getElementById('current-desc').innerText = "❌ ขัดข้องในการเชื่อมต่อ API";
+            }
+        }
+
+        // ดึงข้อมูลครั้งแรกเมื่อโหลดหน้าเว็บเสร็จ
+        fetchWeatherData();
+
+        // ตั้งเวลาให้ดึงข้อมูลใหม่แบบอัตโนมัติทุกๆ 15 นาที (900,000 มิลลิวินาที)
+        setInterval(fetchWeatherData, 900000);
+
+    </script>
+</body>
+</html>
