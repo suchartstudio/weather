@@ -24,16 +24,18 @@
             overflow: hidden;
         }
 
-        /* ล็อกสัดส่วนหน้าจอให้เป็น 4:3 เสมอ */
+        /* ล็อกสัดส่วนหน้าจอให้เป็น 16:9 เสมอ */
         .dashboard-container {
-            aspect-ratio: 4 / 3;
+            aspect-ratio: 16 / 9;
             width: 100vw;
-            max-width: calc(100vh * (4 / 3));
+            max-width: calc(100vh * (16 / 9));
             max-height: 100vh;
             display: grid;
             grid-template-rows: 15% 55% 30%;
             padding: 2%;
             gap: 2%;
+            /* Container Query สำหรับขนาดตัวอักษรที่เป๊ะกับกล่อง */
+            container-type: inline-size;
         }
 
         /* ส่วนหัว: เวลา และ ชื่อเมือง */
@@ -44,12 +46,12 @@
             border-bottom: 3px solid #333;
         }
         .time {
-            font-size: 6cqw;
+            font-size: 4.5cqw;
             font-weight: 700;
             color: #00FFFF; /* สีฟ้าสว่าง */
         }
         .city {
-            font-size: 5cqw;
+            font-size: 3.5cqw;
             font-weight: 600;
             color: #FF00FF; /* สีชมพูบานเย็น */
         }
@@ -73,24 +75,24 @@
         }
         
         .main-temp {
-            font-size: 14cqw;
+            font-size: 10cqw;
             font-weight: 700;
             color: #39FF14; /* สีเขียวสะท้อนแสง */
             line-height: 1;
         }
         .weather-desc {
-            font-size: 4cqw;
+            font-size: 3cqw;
             color: #aaa;
             margin-top: 10px;
         }
 
         .data-value {
-            font-size: 9cqw;
+            font-size: 7cqw;
             font-weight: 700;
             line-height: 1.2;
         }
         .data-label {
-            font-size: 3.5cqw;
+            font-size: 2.5cqw;
             color: #bbb;
         }
 
@@ -115,22 +117,18 @@
             border: 1px solid #333;
         }
         .f-day {
-            font-size: 3cqw;
+            font-size: 2.2cqw;
             color: #FF9900;
             font-weight: 700;
         }
         .f-icon {
-            font-size: 4.5cqw;
+            font-size: 3.5cqw;
             margin: 5px 0;
         }
         .f-temp {
-            font-size: 2.8cqw;
+            font-size: 2cqw;
             color: #fff;
-        }
-
-        /* Container Query สำหรับขนาดตัวอักษรที่เป๊ะกับกล่อง */
-        .dashboard-container {
-            container-type: inline-size;
+            line-height: 1.2;
         }
     </style>
 </head>
@@ -178,7 +176,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // แปลง WMO Weather Code เป็นไอคอนและข้อความ
+        // แปลง WMO Weather Code เป็นไอคอนและข้อความ (ครอบคลุมครบทุกโค้ด)
         function getWeatherDetails(code) {
             const codes = {
                 0: { icon: "☀️", text: "ฟ้าโปร่ง" },
@@ -187,14 +185,30 @@
                 3: { icon: "☁️", text: "มืดครึ้ม" },
                 45: { icon: "🌫️", text: "มีหมอก" },
                 48: { icon: "🌫️", text: "หมอกลงจัด" },
-                51: { icon: "🌦️", text: "ฝนปรอยๆ" },
+                51: { icon: "🌦️", text: "ฝนปรอยๆ เบาบาง" },
+                53: { icon: "🌦️", text: "ฝนปรอยๆ ปานกลาง" },
+                55: { icon: "🌦️", text: "ฝนปรอยๆ หนาแน่น" },
+                56: { icon: "🌧️", text: "ฝนละอองเย็นจัด" },
+                57: { icon: "🌧️", text: "ฝนละอองเย็นจัดหนาแน่น" },
                 61: { icon: "🌧️", text: "ฝนตกเล็กน้อย" },
                 63: { icon: "🌧️", text: "ฝนตกปานกลาง" },
                 65: { icon: "🌧️", text: "ฝนตกหนัก" },
-                80: { icon: "⛈️", text: "ฝนฟ้าคะนอง" },
-                95: { icon: "🌩️", text: "พายุฝนฟ้าคะนอง" }
+                66: { icon: "🌧️", text: "ฝนเย็นจัดตกเบา" },
+                67: { icon: "🌧️", text: "ฝนเย็นจัดตกหนัก" },
+                71: { icon: "❄️", text: "หิมะตกเล็กน้อย" },
+                73: { icon: "❄️", text: "หิมะตกปานกลาง" },
+                75: { icon: "❄️", text: "หิมะตกหนัก" },
+                77: { icon: "❄️", text: "ละอองหิมะ" },
+                80: { icon: "⛈️", text: "ฝนซู่เบาบาง" },
+                81: { icon: "⛈️", text: "ฝนซู่ปานกลาง" },
+                82: { icon: "⛈️", text: "ฝนซู่ตกหนัก" },
+                85: { icon: "❄️", text: "พายุหิมะเบาบาง" },
+                86: { icon: "❄️", text: "พายุหิมะหนัก" },
+                95: { icon: "🌩️", text: "พายุฝนฟ้าคะนอง" },
+                96: { icon: "🌩️", text: "พายุลูกเห็บเล็กน้อย" },
+                99: { icon: "🌩️", text: "พายุลูกเห็บตกหนัก" }
             };
-            return codes[code] || { icon: "❓", text: "ไม่ทราบสถานะ" };
+            return codes[code] || { icon: "❓", text: "ไม่ทราบสถานะ (" + code + ")" };
         }
 
         // แปลงวันที่เป็นวันในสัปดาห์ภาษาไทย
