@@ -3,283 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สภาพอากาศ ขอนแก่น</title>
-    <!-- นำเข้า Google Font: Chakra Petch -->
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Weather Kiosk</title>
     <style>
-        * {
+        /* CSS สำหรับจอ Kiosk บน Raspberry Pi */
+        
+        /* 1. ซ่อนเมาส์แบบเด็ดขาด */
+        body {
+            cursor: none !important; 
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: #000000;
+            background-color: #121212; /* พื้นหลังสีเข้ม สบายตาเวลาเปิดทิ้งไว้ */
             color: #ffffff;
-            font-family: 'Chakra Petch', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* ซ่อนแถบ Scrollbar */
         }
 
-        /* ล็อกสัดส่วนหน้าจอให้เป็น 16:9 เสมอ */
-        .dashboard-container {
-            aspect-ratio: 16 / 9;
-            width: 100vw;
-            max-width: calc(100vh * (16 / 9));
-            max-height: 100vh;
-            display: grid;
-            grid-template-rows: 15% 55% 30%;
-            padding: 2%;
-            gap: 2%;
-            /* Container Query สำหรับขนาดตัวอักษรที่เป๊ะกับกล่อง */
-            container-type: inline-size;
+        /* 2. จัดรูปแบบกล่องแสดงสภาพอากาศ (ไม่มีการเรียกใช้ Icon ภายนอก) */
+        .weather-container {
+            text-align: center;
+            background: #1e1e1e;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 600px;
         }
 
-        /* ส่วนหัว: เวลา และ ชื่อเมือง */
-        .header {
+        .location {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4da8da;
+        }
+
+        .temperature {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .condition {
+            font-size: 2rem;
+            color: #cccccc;
+            margin-bottom: 30px;
+        }
+
+        .details {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #333;
+            justify-content: space-around;
+            font-size: 1.5rem;
+            border-top: 1px solid #333;
+            padding-top: 20px;
         }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 1rem;
+            color: #888;
+        }
+
         .time {
-            font-size: 4.5cqw;
-            font-weight: 700;
-            color: #00FFFF; /* สีฟ้าสว่าง */
-        }
-        .city {
-            font-size: 3.5cqw;
-            font-weight: 600;
-            color: #FF00FF; /* สีชมพูบานเย็น */
-        }
-
-        /* ส่วนกลาง: ข้อมูลปัจจุบัน (อุณหภูมิ, PM2.5, โอกาสฝน) */
-        .current-weather {
-            display: grid;
-            grid-template-columns: 40% 30% 30%;
-            gap: 2%;
-            align-items: center;
-            text-align: center;
-        }
-        .temp-box, .pm25-box, .rain-box {
-            background-color: #111;
-            border-radius: 15px;
-            padding: 20px 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
-        }
-        
-        .main-temp {
-            font-size: 10cqw;
-            font-weight: 700;
-            color: #39FF14; /* สีเขียวสะท้อนแสง */
-            line-height: 1;
-        }
-        .weather-desc {
-            font-size: 3cqw;
-            color: #aaa;
-            margin-top: 10px;
-        }
-
-        .data-value {
-            font-size: 7cqw;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        .data-label {
-            font-size: 2.5cqw;
-            color: #bbb;
-        }
-
-        .pm25-val { color: #FFEA00; } /* สีเหลืองสว่าง */
-        .rain-val { color: #00BFFF; } /* สีฟ้าลึก */
-
-        /* ส่วนล่าง: พยากรณ์อากาศ 7 วัน */
-        .forecast-container {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 1.5%;
-        }
-        .forecast-card {
-            background-color: #1a1a1a;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 10px 5px;
-            border: 1px solid #333;
-        }
-        .f-day {
-            font-size: 2.2cqw;
-            color: #FF9900;
-            font-weight: 700;
-        }
-        .f-icon {
-            font-size: 3.5cqw;
-            margin: 5px 0;
-        }
-        .f-temp {
-            font-size: 2cqw;
-            color: #fff;
-            line-height: 1.2;
+            margin-top: 30px;
+            font-size: 1.2rem;
+            color: #666;
         }
     </style>
 </head>
 <body>
 
-    <div class="dashboard-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="time" id="clock">00:00:00</div>
-            <div class="city">ขอนแก่น (Khon Kaen)</div>
-        </div>
-
-        <!-- Current Weather -->
-        <div class="current-weather">
-            <div class="temp-box">
-                <div class="main-temp" id="current-temp">--°</div>
-                <div class="weather-desc" id="current-desc">กำลังโหลดข้อมูล...</div>
+    <div class="weather-container">
+        <!-- ข้อมูลสภาพอากาศ (แก้ไขเป็นค่าจริงของเว็บคุณได้เลย) -->
+        <div class="location">กรุงเทพมหานคร</div>
+        <div class="temperature">32°C</div>
+        <div class="condition">ท้องฟ้าโปร่ง แดดจัด</div>
+        
+        <div class="details">
+            <div class="detail-item">
+                <span class="detail-label">ความชื้น</span>
+                <span>65%</span>
             </div>
-            <div class="pm25-box">
-                <div class="data-value pm25-val" id="current-pm25">--</div>
-                <div class="data-label">PM 2.5 (µg/m³)</div>
+            <div class="detail-item">
+                <span class="detail-label">แรงลม</span>
+                <span>12 กม./ชม.</span>
             </div>
-            <div class="rain-box">
-                <div class="data-value rain-val" id="current-rain">--</div>
-                <div class="data-label">คาดการณ์ฝน (มม.)</div>
+            <div class="detail-item">
+                <span class="detail-label">โอกาสฝนตก</span>
+                <span>10%</span>
             </div>
         </div>
 
-        <!-- 7 Days Forecast -->
-        <div class="forecast-container" id="forecast-grid">
-            <!-- ข้อมูลพยากรณ์ 7 วันจะถูกแทรกที่นี่ด้วย JS -->
-        </div>
+        <!-- เวลาอัปเดต -->
+        <div class="time" id="clock">กำลังโหลดเวลา...</div>
     </div>
 
     <script>
-        // พิกัดเมืองขอนแก่น
-        const LAT = 16.4322;
-        const LON = 102.8236;
-
-        // ฟังก์ชันอัปเดตนาฬิกา
-        function updateClock() {
+        // สคริปต์สำหรับแสดงเวลาอัปเดตแบบ Real-time บนหน้าจอ
+        function updateTime() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH', { hour12: false });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // แปลง WMO Weather Code เป็นไอคอนและข้อความ (ครอบคลุมครบทุกโค้ด)
-        function getWeatherDetails(code) {
-            const codes = {
-                0: { icon: "☀️", text: "ฟ้าโปร่ง" },
-                1: { icon: "🌤️", text: "เมฆบางส่วน" },
-                2: { icon: "⛅", text: "มีเมฆมาก" },
-                3: { icon: "☁️", text: "มืดครึ้ม" },
-                45: { icon: "🌫️", text: "มีหมอก" },
-                48: { icon: "🌫️", text: "หมอกลงจัด" },
-                51: { icon: "🌦️", text: "ฝนปรอยๆ เบาบาง" },
-                53: { icon: "🌦️", text: "ฝนปรอยๆ ปานกลาง" },
-                55: { icon: "🌦️", text: "ฝนปรอยๆ หนาแน่น" },
-                56: { icon: "🌧️", text: "ฝนละอองเย็นจัด" },
-                57: { icon: "🌧️", text: "ฝนละอองเย็นจัดหนาแน่น" },
-                61: { icon: "🌧️", text: "ฝนตกเล็กน้อย" },
-                63: { icon: "🌧️", text: "ฝนตกปานกลาง" },
-                65: { icon: "🌧️", text: "ฝนตกหนัก" },
-                66: { icon: "🌧️", text: "ฝนเย็นจัดตกเบา" },
-                67: { icon: "🌧️", text: "ฝนเย็นจัดตกหนัก" },
-                71: { icon: "❄️", text: "หิมะตกเล็กน้อย" },
-                73: { icon: "❄️", text: "หิมะตกปานกลาง" },
-                75: { icon: "❄️", text: "หิมะตกหนัก" },
-                77: { icon: "❄️", text: "ละอองหิมะ" },
-                80: { icon: "⛈️", text: "ฝนซู่เบาบาง" },
-                81: { icon: "⛈️", text: "ฝนซู่ปานกลาง" },
-                82: { icon: "⛈️", text: "ฝนซู่ตกหนัก" },
-                85: { icon: "❄️", text: "พายุหิมะเบาบาง" },
-                86: { icon: "❄️", text: "พายุหิมะหนัก" },
-                95: { icon: "🌩️", text: "พายุฝนฟ้าคะนอง" },
-                96: { icon: "🌩️", text: "พายุลูกเห็บเล็กน้อย" },
-                99: { icon: "🌩️", text: "พายุลูกเห็บตกหนัก" }
-            };
-            return codes[code] || { icon: "❓", text: "ไม่ทราบสถานะ (" + code + ")" };
+            const timeString = now.toLocaleTimeString('th-TH', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            const dateString = now.toLocaleDateString('th-TH', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            document.getElementById('clock').textContent = `ข้อมูลล่าสุด: ${dateString} เวลา ${timeString}`;
         }
 
-        // แปลงวันที่เป็นวันในสัปดาห์ภาษาไทย
-        function getThaiDay(dateString) {
-            const days = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
-            const date = new Date(dateString);
-            return days[date.getDay()];
-        }
+        // อัปเดตเวลาทุกๆ 1 วินาที
+        setInterval(updateTime, 1000);
+        updateTime();
 
-        // ฟังก์ชันดึงข้อมูลสภาพอากาศ
-        async function fetchWeatherData() {
-            try {
-                // 1. ดึงข้อมูลสภาพอากาศและพยากรณ์
-                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,rain,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FBangkok`);
-                const weatherData = await weatherRes.json();
-
-                // 2. ดึงข้อมูลคุณภาพอากาศ (PM2.5)
-                const aqiRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok`);
-                const aqiData = await aqiRes.json();
-
-                // --- อัปเดตข้อมูลปัจจุบัน ---
-                const current = weatherData.current;
-                const weatherDetail = getWeatherDetails(current.weather_code);
-                
-                document.getElementById('current-temp').innerText = `${Math.round(current.temperature_2m)}°`;
-                document.getElementById('current-desc').innerText = `${weatherDetail.icon} ${weatherDetail.text}`;
-                document.getElementById('current-rain').innerText = current.rain;
-                
-                // อัปเดต PM 2.5 และเปลี่ยนสีตามความอันตราย
-                const pm25Value = Math.round(aqiData.current.pm2_5);
-                const pm25Element = document.getElementById('current-pm25');
-                pm25Element.innerText = pm25Value;
-                
-                if (pm25Value <= 25) pm25Element.style.color = "#39FF14"; // เขียว
-                else if (pm25Value <= 50) pm25Element.style.color = "#FFEA00"; // เหลือง
-                else if (pm25Value <= 100) pm25Element.style.color = "#FF9900"; // ส้ม
-                else pm25Element.style.color = "#FF003C"; // แดง
-
-                // --- อัปเดตพยากรณ์ 7 วัน ---
-                const daily = weatherData.daily;
-                const forecastGrid = document.getElementById('forecast-grid');
-                forecastGrid.innerHTML = ''; // ล้างค่าเดิม
-
-                for (let i = 0; i < 7; i++) {
-                    const dayName = i === 0 ? "วันนี้" : getThaiDay(daily.time[i]);
-                    const fIcon = getWeatherDetails(daily.weather_code[i]).icon;
-                    const maxT = Math.round(daily.temperature_2m_max[i]);
-                    const minT = Math.round(daily.temperature_2m_min[i]);
-
-                    const card = document.createElement('div');
-                    card.className = 'forecast-card';
-                    card.innerHTML = `
-                        <div class="f-day">${dayName}</div>
-                        <div class="f-icon">${fIcon}</div>
-                        <div class="f-temp"><span style="color:#FF69B4;">${maxT}°</span><br><span style="color:#00BFFF;">${minT}°</span></div>
-                    `;
-                    forecastGrid.appendChild(card);
-                }
-
-            } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
-                document.getElementById('current-desc').innerText = "❌ ขัดข้องในการเชื่อมต่อ API";
-            }
-        }
-
-        // ดึงข้อมูลครั้งแรกเมื่อโหลดหน้าเว็บเสร็จ
-        fetchWeatherData();
-
-        // ตั้งเวลาให้ดึงข้อมูลใหม่แบบอัตโนมัติทุกๆ 15 นาที (900,000 มิลลิวินาที)
-        setInterval(fetchWeatherData, 900000);
-
+        /* 
+        หมายเหตุ: หากคุณมี Script สำหรับดึงข้อมูล API สภาพอากาศ (เช่น OpenWeatherMap หรือ TMD) 
+        สามารถนำมาเขียนต่อในส่วนนี้ เพื่อให้ค่าอุณหภูมิด้านบนเปลี่ยนแบบอัตโนมัติได้เลยครับ 
+        */
     </script>
+
 </body>
 </html>
